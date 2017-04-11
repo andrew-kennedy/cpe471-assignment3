@@ -3,7 +3,6 @@
 #include <globjects/VertexAttributeBinding.h>
 #include <globjects/globjects.h>
 #include <globjects/Texture.h>
-#include <cassert>
 #include <glm/vec3.hpp>
 
 #include "Mesh.h"
@@ -83,6 +82,15 @@ void Mesh::draw(ref_ptr<Program> shader) const {
     this->textures[i]->bindActive(i);
   }
 
+  // set all uniforms
+  // this allows for overriding previously defined uniforms with ones
+  // from the model/mesh
+  for (auto &u : uniforms) {
+    shader->addUniform(u.second);
+  }
+
+
+
   vao->bind();
   elemBuf->bind(GL_ELEMENT_ARRAY_BUFFER);
   vao->drawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT);
@@ -98,5 +106,8 @@ void Mesh::draw(ref_ptr<Program> shader) const {
 
 void Mesh::addTexture(ref_ptr<Texture> tex) {
   textures.push_back(tex);
+}
+void Mesh::setUniforms(unordered_map<string, ref_ptr<AbstractUniform>> uniforms) {
+  this->uniforms = uniforms;
 }
 

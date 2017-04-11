@@ -31,6 +31,7 @@ void Model::loadModel(string path, bool normalize) {
       import.ReadFile(path,
                       aiProcess_Triangulate
                       | aiProcess_GenSmoothNormals
+                      | aiProcess_GenUVCoords
                       | aiProcess_PreTransformVertices);
 
   if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
@@ -43,6 +44,7 @@ void Model::loadModel(string path, bool normalize) {
 
   // process ASSIMP's root node recursively
   this->processNode(scene->mRootNode, scene);
+  this->updateMeshUniforms();
 }
 
 void Model::processNode(aiNode *node, aiScene const *scene) {
@@ -98,6 +100,20 @@ Mesh Model::processMesh(aiMesh *mesh, aiScene const *scene) {
   // Diffuse: texture_diffuseN
   // Specular: texture_specularN
   // Normal: texture_normalN
+  aiColor3D diffuse(0.f, 0.f, 0.f);
+  aiColor3D ambient(0.f, 0.f, 0.f);
+  aiColor3D specular(0.f, 0.f, 0.f);
+  float shininess = 0.0f;
+
+  material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse);
+  material->Get(AI_MATKEY_COLOR_AMBIENT, ambient);
+  material->Get(AI_MATKEY_COLOR_SPECULAR, specular);
+  material->Get(AI_MATKEY_SHININESS, shininess);
+
+  uniforms["u_material.shininess"] = new Uniform<float>("u_material.shininess", shininess);
+  uniforms["u_material.diffuse"] = new Uniform<glm::vec3>("u_material.diffuse", glm::vec3(diffuse.r, diffuse.g, diffuse.b));
+  uniforms["u_material.ambient"] = new Uniform<glm::vec3>("u_material.ambient", glm::vec3(ambient.r, ambient.g, ambient.b));
+  uniforms["u_material.specular"] = new Uniform<glm::vec3>("u_material.specular", glm::vec3(specular.r, specular.g, specular.b));
 
   // 1. Diffuse maps
   vector<ref_ptr<Texture>> diffuseMaps = this->loadMaterialTextures(material,
@@ -155,6 +171,34 @@ void Model::addTexture(aiString const path, string const typeName, bool tile) {
     }
   }
 
+}
+void Model::setUniform(ref_ptr<AbstractUniform> uniform) {
+  uniforms[uniform->name()] = uniform;
+  updateMeshUniforms();
+}
+
+void Model::setUniforms(vector<ref_ptr<AbstractUniform>> uniforms) {
+  for (auto u : uniforms) {
+    this->uniforms[u->name()] = u;
+  }
+  updateMeshUniforms();
+}
+
+void Model::setUniforms(unordered_map<string, ref_ptr<AbstractUniform>> uniforms) {
+  for (auto &u : uniforms) {
+    this->uniforms[u.second->name()] = u.second;
+  }
+  updateMeshUniforms();
+}
+
+ref_ptr<AbstractUniform> Model::getUniform(string name) {
+  return uniforms[name];
+}
+
+void Model::updateMeshUniforms() {
+  for (auto &m : meshes) {
+    m.setUniforms(this->uniforms);
+  }
 }
 
 ref_ptr<Texture> TextureFromFile(const char *path, string directory, bool tile) {

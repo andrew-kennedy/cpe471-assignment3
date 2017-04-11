@@ -21,6 +21,7 @@ public:
        vector<ref_ptr<Texture>> textures);
   void draw(ref_ptr<Program> shader) const;
   void addTexture(ref_ptr<Texture> tex);
+  void setUniforms(unordered_map<string, ref_ptr<AbstractUniform>> uniforms);
 
 private:
   void init();
@@ -29,7 +30,7 @@ private:
   vector<glm::vec3> normals;
   vector<glm::vec2> texCoords;
   vector<ref_ptr<Texture>> textures;
-  // TODO: possibly interleave buffers?
+  unordered_map<string, ref_ptr<AbstractUniform>> uniforms;
   ref_ptr<Buffer> elemBuf;
   ref_ptr<Buffer> posBuf;
   ref_ptr<Buffer> normBuf;
