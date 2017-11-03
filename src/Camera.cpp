@@ -42,17 +42,19 @@ glm::mat4 Camera::GetViewMatrix() {
 // of camera defined ENUM (to abstract it from windowing systems)
 void Camera::ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime) {
   GLfloat velocity = this->MovementSpeed * deltaTime;
-  if (direction == Camera_Movement::FORWARD) {
-    this->Position += this->Front * velocity;
-  }
-  if (direction == Camera_Movement::BACKWARD) {
-    this->Position -= this->Front * velocity;
-  }
-  if (direction == Camera_Movement::LEFT) {
-    this->Position -= this->Right * velocity;
-  }
-  if (direction == Camera_Movement::RIGHT) {
-    this->Position += this->Right * velocity;
+  switch (direction) {
+    case Camera_Movement::FORWARD:
+      this->Position += this->Front * velocity;
+      break;
+    case Camera_Movement::BACKWARD:
+      this->Position -= this->Front * velocity;
+      break;
+    case Camera_Movement::LEFT:
+      this->Position -= this->Right * velocity;
+      break;
+    case Camera_Movement::RIGHT:
+      this->Position += this->Right * velocity;
+      break;
   }
 }
 
